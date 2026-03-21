@@ -87,7 +87,8 @@ class TestCostEstimation:
         # expected = 3 * 0.00002 = 0.00006
         assert cost == pytest.approx(0.00006)
 
-    def test_generate_self_assessment_calls_accurate_cost(self, agent, mock_registry, sample_subtask):
+    @pytest.mark.asyncio
+    async def test_generate_self_assessment_calls_accurate_cost(self, agent, mock_registry, sample_subtask):
         model_id = "test-model"
         response = "Test response content"
         agent._build_prompt = MagicMock(return_value="Prompt content")
@@ -98,7 +99,7 @@ class TestCostEstimation:
         )
         mock_registry.get_model_cost_profile.return_value = profile
         
-        assessment = agent.generate_self_assessment(response, sample_subtask, model_id)
+        assessment = await agent.generate_self_assessment(response, sample_subtask, model_id)
         
         # Input (14 chars): 3 tokens. Output (21 chars): 5 tokens.
         # Cost: 3*0.1 + 5*0.2 = 0.3 + 1.0 = 1.3

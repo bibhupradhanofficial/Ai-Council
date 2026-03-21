@@ -107,7 +107,7 @@ class BaseExecutionAgent(ExecutionAgent):
                 response_content = await self._execute_with_protection(subtask, model)
                 
                 # Generate self-assessment
-                self_assessment = self.generate_self_assessment(response_content, subtask, model_id)
+                self_assessment = await self.generate_self_assessment(response_content, subtask, model_id)
                 self_assessment.model_used = model_id
                 self_assessment.execution_time = time.time() - start_time
                 
@@ -379,7 +379,7 @@ class BaseExecutionAgent(ExecutionAgent):
         else:
             return "default"
     
-    def generate_self_assessment(self, response: str, subtask: Subtask, model_id: str) -> SelfAssessment:
+    async def generate_self_assessment(self, response: str, subtask: Subtask, model_id: str) -> SelfAssessment:
         """Generate a self-assessment of the agent's performance.
         
         Args:
