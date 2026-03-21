@@ -385,6 +385,7 @@ class BaseExecutionAgent(ExecutionAgent):
         Args:
             response: The generated response content
             subtask: The subtask that was executed
+            model_id: Identifier of the LLM model used, required for cost estimation
             
         Returns:
             SelfAssessment: Structured self-assessment metadata
