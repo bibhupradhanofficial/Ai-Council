@@ -62,6 +62,8 @@ async def test_synthesize_multiple_responses_redundancy(synthesis_layer, sample_
     # Should contain resp1 and unique parts of resp3, but not resp2 (redundant)
     assert "core information" in result.content
     assert "Solar power" in result.content
+    # Explicitly check for redundancy removal: "core information" should only appear once
+    assert result.content.count("core information") == 1
     # Note: the specific synthesis logic might add "Additionally, ..."
     assert result.overall_confidence > 0.7  # Weighted avg with multiple response penalty
 
@@ -99,7 +101,7 @@ async def test_calculate_overall_confidence_risk_weighting(synthesis_layer):
     assert result.overall_confidence == pytest.approx(0.98)
 
 @pytest.mark.asyncio
-async def test_noop_synthesis_layer():
+async def test_noop_synthesis_layer_success():
     layer = NoOpSynthesisLayer()
     resp = AgentResponse(
         subtask_id="1", model_used="m", content="Content", success=True,
@@ -111,12 +113,16 @@ async def test_noop_synthesis_layer():
     assert result.content == "Content"
     assert result.overall_confidence == pytest.approx(0.9)
     assert result.cost_breakdown.total_cost == pytest.approx(0.1)
-    
-    # Test empty
+
+@pytest.mark.asyncio
+async def test_noop_synthesis_layer_empty_input():
+    layer = NoOpSynthesisLayer()
     result_empty = await layer.synthesize([])
     assert result_empty.success is False
-    
-    # Test no success
+
+@pytest.mark.asyncio
+async def test_noop_synthesis_layer_failure():
+    layer = NoOpSynthesisLayer()
     resp_fail = AgentResponse(subtask_id="1", model_used="m", content="", success=False, error_message="e")
     result_fail = await layer.synthesize([resp_fail])
     assert result_fail.success is False

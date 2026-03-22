@@ -1,18 +1,17 @@
 import sys
 import os
 import yaml
+import tempfile
 from pathlib import Path
 
-# Standard imports
+# Add current directory to path before ai_council imports
+sys.path.append(os.getcwd())
 
 from ai_council.main import AICouncil
 from ai_council.utils.config import AICouncilConfig
 
 def debug_init():
-    # Add current directory to path
-    sys.path.append(os.getcwd())
-    
-    config_file = Path("debug_config.yaml")
+    temp_config_path = None
     try:
         # Create a dummy config dict
         config_dict = {
@@ -41,28 +40,33 @@ def debug_init():
             }
         }
         
-        # Write to a temp file
-        config_file = Path("debug_config.yaml")
-        with open(config_file, 'w') as f:
+        # Write to a secure temp file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
             yaml.dump(config_dict, f)
+            temp_config_path = Path(f.name)
             
-        # Note: TEST_API_KEY must be set in the environment or this will fail validation
-        # in a real scenario. For local debugging, you can set it to a dummy value.
-        print(f"Loading config from {config_file.absolute()}")
+        print(f"Loading config from {temp_config_path.absolute()}")
         
         print("Initializing AICouncil...")
-        council = AICouncil(config_path=config_file)
+        council = AICouncil(config_path=temp_config_path)
         print("AICouncil initialized successfully")
         
-    except Exception as e:
+    except (OSError, yaml.YAMLError, ValueError, RuntimeError) as e:
         print(f"An error occurred: {type(e).__name__}: {str(e)}")
         import traceback
         traceback.print_exc()
+        raise
+    except Exception as e:
+        print(f"An unexpected error occurred: {type(e).__name__}: {str(e)}")
+        raise
     finally:
         # Cleanup
-        if config_file.exists():
-            config_file.unlink()
-            print(f"Cleaned up {config_file}")
+        if temp_config_path and temp_config_path.exists():
+            try:
+                temp_config_path.unlink()
+                print(f"Cleaned up temporary config at {temp_config_path}")
+            except Exception as cleanup_err:
+                print(f"Failed to cleanup {temp_config_path}: {cleanup_err}")
 
 if __name__ == "__main__":
     debug_init()
