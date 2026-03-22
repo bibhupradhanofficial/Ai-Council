@@ -2,6 +2,7 @@
 
 import time
 import random
+import asyncio
 from typing import Dict, Any, Optional, List
 from enum import Enum
 
@@ -62,7 +63,7 @@ class MockAIModel(AIModel):
         self._rate_limit_window = 60.0  # 1 minute window
         self._max_requests_per_window = 100
     
-    def generate_response(self, prompt: str, **kwargs) -> str:
+    async def generate_response(self, prompt: str, **kwargs) -> str:
         """Generate a response from the mock AI model.
         
         Args:
@@ -87,7 +88,7 @@ class MockAIModel(AIModel):
             
             # Simulate processing delay
             if self.response_delay > 0:
-                time.sleep(self.response_delay)
+                await asyncio.sleep(self.response_delay)
             
             # Generate response based on template and parameters
             response = self._generate_mock_response(prompt, **kwargs)

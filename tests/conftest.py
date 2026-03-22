@@ -132,7 +132,7 @@ def sample_model_config() -> ModelConfig:
     return ModelConfig(
         name="test-model",
         provider="test-provider",
-        api_key_env="TEST_API_KEY",
+        api_key_env="",
         max_retries=3,
         timeout_seconds=30.0,
         cost_per_input_token=0.00001,
@@ -184,7 +184,7 @@ def sample_config_dict() -> Dict[str, Any]:
             "test-model": {
                 "enabled": True,
                 "provider": "test",
-                "api_key_env": "TEST_API_KEY",
+                "api_key_env": "",
                 "capabilities": ["reasoning"],
                 "cost_per_input_token": 0.00001,
                 "cost_per_output_token": 0.00003,
