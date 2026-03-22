@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from ai_council.arbitration.layer import ConcreteArbitrationLayer
 from ai_council.core.models import AgentResponse, SelfAssessment, RiskLevel
 
@@ -32,6 +33,7 @@ async def main():
     except Exception as e:
         import traceback
         traceback.print_exc()
+        raise e
 
 if __name__ == "__main__":
     asyncio.run(main())

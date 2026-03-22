@@ -3,13 +3,16 @@ import os
 import yaml
 from pathlib import Path
 
-# Add current directory to path
-sys.path.append(os.getcwd())
+# Standard imports
 
 from ai_council.main import AICouncil
 from ai_council.utils.config import AICouncilConfig
 
 def debug_init():
+    # Add current directory to path
+    sys.path.append(os.getcwd())
+    
+    config_file = Path("debug_config.yaml")
     try:
         # Create a dummy config dict
         config_dict = {
@@ -51,14 +54,15 @@ def debug_init():
         council = AICouncil(config_path=config_file)
         print("AICouncil initialized successfully")
         
-        # Cleanup
-        if config_file.exists():
-            config_file.unlink()
-            
     except Exception as e:
         print(f"An error occurred: {type(e).__name__}: {str(e)}")
         import traceback
         traceback.print_exc()
+    finally:
+        # Cleanup
+        if config_file.exists():
+            config_file.unlink()
+            print(f"Cleaned up {config_file}")
 
 if __name__ == "__main__":
     debug_init()

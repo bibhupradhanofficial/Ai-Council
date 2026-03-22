@@ -78,9 +78,10 @@ async def test_normalize_output(synthesis_layer):
 async def test_normalize_tone(synthesis_layer):
     content = "In conclusion, the project is good. Please note that it is important to note that it works."
     normalized = await synthesis_layer.normalize_output(content)
-    assert "In conclusion" not in normalized
-    assert "Please note that" not in normalized
-    assert "it is important to note that" not in normalized
+    normalized_lower = normalized.lower()
+    assert "in conclusion" not in normalized_lower
+    assert "please note that" not in normalized_lower
+    assert "it is important to note that" not in normalized_lower
 
 @pytest.mark.asyncio
 async def test_calculate_overall_confidence_risk_weighting(synthesis_layer):
@@ -93,12 +94,9 @@ async def test_calculate_overall_confidence_risk_weighting(synthesis_layer):
         self_assessment=SelfAssessment(confidence_score=1.0, risk_level=RiskLevel.HIGH)
     )
     
-    # Low risk has weight 1.0, High risk has weight 0.6
-    # (1.0 * 1.0 + 1.0 * 0.6) / (1.0 + 0.6) = 1.0
-    # Then apply multiple response penalty (1 response extra * 0.02 = 0.02)
     # Final = 0.98
-    conf = synthesis_layer._calculate_overall_confidence([resp_low, resp_high])
-    assert conf == pytest.approx(0.98)
+    result = await synthesis_layer.synthesize([resp_low, resp_high])
+    assert result.overall_confidence == pytest.approx(0.98)
 
 @pytest.mark.asyncio
 async def test_noop_synthesis_layer():
@@ -111,8 +109,8 @@ async def test_noop_synthesis_layer():
     result = await layer.synthesize([resp])
     assert result.success is True
     assert result.content == "Content"
-    assert result.overall_confidence == 0.9
-    assert result.cost_breakdown.total_cost == 0.1
+    assert result.overall_confidence == pytest.approx(0.9)
+    assert result.cost_breakdown.total_cost == pytest.approx(0.1)
     
     # Test empty
     result_empty = await layer.synthesize([])

@@ -18,6 +18,7 @@ def run_tests(output_path: str):
         f.write(result.stderr)
     
     print(f"Finished with exit code {result.returncode}")
+    sys.exit(result.returncode)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run arbitration tests and generate report.")

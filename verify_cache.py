@@ -3,7 +3,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 from ai_council.orchestration.cost_optimizer import CostOptimizer
 from ai_council.core.models import Subtask, TaskType, ExecutionMode, Priority, RiskLevel
-from ai_council.core.interfaces import ModelRegistry, ModelCapabilities, CostProfile, PerformanceMetrics
+from ai_council.core.interfaces import ModelRegistry, ModelCapabilities, CostProfile, PerformanceMetrics, AIModel
 from typing import List, Optional
 
 class MockModelRegistry(ModelRegistry):
@@ -26,7 +26,6 @@ class MockModelRegistry(ModelRegistry):
         # Return a simple mock model if it's one of the expected test models
         if model_id in ["test-model-1", "test-model-2"]:
             from unittest.mock import MagicMock
-            from ai_council.core.interfaces import AIModel
             model = MagicMock(spec=AIModel)
             model.get_model_id.return_value = model_id
             return model
