@@ -1,5 +1,4 @@
 import pytest
-from datetime import datetime
 from ai_council.synthesis.layer import SynthesisLayerImpl, NoOpSynthesisLayer
 from ai_council.core.models import AgentResponse, SelfAssessment, RiskLevel, FinalResponse
 from ai_council.core.interfaces import ExecutionMetadata

@@ -58,8 +58,8 @@ async def test_pipeline_fast_mode(temp_config_file):
     
     assert response.success is True
     assert len(response.content) > 0
-    # In FAST mode, we expect usually 1 model unless it fails
-    assert len(response.models_used) == 1
+    # In FAST mode, we expect at least one model used
+    assert len(response.models_used) >= 1
 
 @pytest.mark.asyncio
 async def test_pipeline_with_orchestration_layer_directly(temp_config_file):

@@ -98,9 +98,6 @@ async def test_calculate_overall_confidence_risk_weighting(synthesis_layer):
     # Then apply multiple response penalty (1 response extra * 0.02 = 0.02)
     # Final = 0.98
     conf = synthesis_layer._calculate_overall_confidence([resp_low, resp_high])
-    print(f"\nDEBUG: Calculated confidence: {conf}")
-    for r in [resp_low, resp_high]:
-        print(f"DEBUG: Response model={r.model_used}, confidence={r.self_assessment.confidence_score}, risk={r.self_assessment.risk_level}")
     assert conf == pytest.approx(0.98)
 
 @pytest.mark.asyncio

@@ -5,6 +5,9 @@ execution:
   enable_synthesis: true
   max_parallel_executions: 5
   max_retries: 3
+  default_accuracy_requirement: 0.8
+cost:
+  max_cost_per_request: 1.0
 models:
   test-model:
     api_key_env: TEST_API_KEY

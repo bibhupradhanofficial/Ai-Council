@@ -178,8 +178,18 @@ def test_validate_response_quality(arbitration_layer, sample_agent_response):
     sample_agent_response.content = "Valid content"
     
     # Critical risk
-    sample_agent_response.self_assessment.risk_level = RiskLevel.CRITICAL
-    assert arbitration_layer._validate_response_quality(sample_agent_response) is False
+    # Create a new response instance instead of mutating the shared fixture
+    high_risk_response = AgentResponse(
+        subtask_id=sample_agent_response.subtask_id,
+        model_used=sample_agent_response.model_used,
+        content=sample_agent_response.content,
+        success=sample_agent_response.success,
+        self_assessment=SelfAssessment(
+            confidence_score=sample_agent_response.self_assessment.confidence_score,
+            risk_level=RiskLevel.CRITICAL
+        )
+    )
+    assert arbitration_layer._validate_response_quality(high_risk_response) is False
 
 @pytest.mark.asyncio
 async def test_noop_arbitration_layer():

@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import MagicMock
-from datetime import datetime, timezone
 
 from ai_council.arbitration.layer import ConcreteArbitrationLayer
 from ai_council.core.models import AgentResponse, SelfAssessment, RiskLevel

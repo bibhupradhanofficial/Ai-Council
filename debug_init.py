@@ -19,7 +19,11 @@ def debug_init():
                 "max_retries": 3,
                 "default_timeout_seconds": 60.0,
                 "enable_arbitration": True,
-                "enable_synthesis": True
+                "enable_synthesis": True,
+                "default_accuracy_requirement": 0.8
+            },
+            "cost": {
+                "max_cost_per_request": 1.0
             },
             "models": {
                 "test-model": {
@@ -39,9 +43,9 @@ def debug_init():
         with open(config_file, 'w') as f:
             yaml.dump(config_dict, f)
             
+        # Note: TEST_API_KEY must be set in the environment or this will fail validation
+        # in a real scenario. For local debugging, you can set it to a dummy value.
         print(f"Loading config from {config_file.absolute()}")
-        config = AICouncilConfig.from_file(config_file)
-        print("Config loaded successfully")
         
         print("Initializing AICouncil...")
         council = AICouncil(config_path=config_file)
