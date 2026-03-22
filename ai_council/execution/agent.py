@@ -1,6 +1,7 @@
 """Execution agent implementation for AI Council."""
-
+import tiktoken
 import time
+import re
 from ai_council.core.logger import get_logger
 import asyncio
 from typing import Optional, Dict, Any
@@ -38,7 +39,9 @@ class BaseExecutionAgent(ExecutionAgent):
         
         # Initialize circuit breakers for different failure types
         from ..core.failure_handling import CircuitBreakerConfig
-        
+
+        self.encoding = tiktoken.encoding_for_model("gpt-4")
+
         # Circuit breaker for model API calls
         api_cb_config = CircuitBreakerConfig(
             failure_threshold=5,
@@ -53,6 +56,10 @@ class BaseExecutionAgent(ExecutionAgent):
         rate_limit_manager.set_rate_limit("openai", 60)  # 60 requests per minute
         rate_limit_manager.set_rate_limit("anthropic", 50)  # 50 requests per minute
         rate_limit_manager.set_rate_limit("default", 30)  # Default rate limit
+
+    def _count_tokens(self, text: str) -> int:
+        """Count tokens accurately using tiktoken."""
+        return len(self.encoding.encode(text))
     
     async def execute(self, subtask: Subtask, model: AIModel, depth: int = 0) -> AgentResponse:
         """Execute a subtask using the specified AI model with comprehensive failure handling.
@@ -632,24 +639,29 @@ class BaseExecutionAgent(ExecutionAgent):
             confidence += 0.2
         elif response_length < 10:
             confidence -= 0.3
+            
+        response_lower = response.lower()
         
-        # Check for uncertainty indicators
-        uncertainty_phrases = [
-            "i'm not sure", "i think", "maybe", "possibly", "might be",
-            "i don't know", "unclear", "uncertain", "not confident"
+        # Use regex word boundaries and strictly self-referential phrases
+        uncertainty_patterns = [
+            r"\bi'm not sure\b", r"\bi am not sure\b", 
+            r"\bi think\s+(?:but|though|however|but i'm not sure|though i'm not sure)\b", 
+            r"\bi don't know\b", r"\bi do not know\b",
+            r"\bit is unclear to me\b", r"\bi am uncertain\b", r"\bi'm uncertain\b",
+            r"\bi am not confident\b", r"\bi'm not confident\b"
         ]
         
-        response_lower = response.lower()
-        uncertainty_count = sum(1 for phrase in uncertainty_phrases if phrase in response_lower)
+        uncertainty_count = sum(len(re.findall(pattern, response_lower)) for pattern in uncertainty_patterns)
         confidence -= min(0.3, uncertainty_count * 0.1)
         
-        # Check for confidence indicators
-        confidence_phrases = [
-            "definitely", "certainly", "clearly", "obviously", "without doubt",
-            "confirmed", "verified", "established"
+        # Apply word boundaries to confidence indicators
+        confidence_patterns = [
+            r"\bdefinitely\b", r"\bcertainly\b", r"\bclearly\b", r"\bobviously\b", 
+            r"\bwithout doubt\b", r"\bwithout a doubt\b", r"\bconfirmed\b", 
+            r"\bverified\b", r"\bestablished\b"
         ]
         
-        confidence_count = sum(1 for phrase in confidence_phrases if phrase in response_lower)
+        confidence_count = sum(len(re.findall(pattern, response_lower)) for pattern in confidence_patterns)
         confidence += min(0.2, confidence_count * 0.05)
         
         # Ensure confidence is within bounds
@@ -697,22 +709,23 @@ class BaseExecutionAgent(ExecutionAgent):
         """
         assumptions = []
         
-        # Look for assumption indicators
+        # Use regex word boundaries to prevent partial matches
         assumption_patterns = [
-            "assuming", "given that", "if we assume", "presuming",
-            "taking for granted", "based on the assumption"
+            r"\bassuming\b", r"\bgiven that\b", r"\bif we assume\b", 
+            r"\bpresuming\b", r"\btaking for granted\b", r"\bbased on the assumption\b"
         ]
         
-        response_lower = response.lower()
-        sentences = response.split('.')
+        # Split by punctuation or newlines, but use negative lookbehinds to protect 
+        split_pattern = r'(?<!\d)(?<!\bDr)(?<!\bMr)(?<!\bMs)(?<!\bvs)(?<!\be\.g)(?<!\bi\.e)(?<!\bMrs)(?<!\betc)[.!?]+(?:\s+|\n+)|\n+'
+        sentences = re.split(split_pattern, response)
         
         for sentence in sentences:
             sentence_lower = sentence.lower().strip()
             for pattern in assumption_patterns:
-                if pattern in sentence_lower:
+                if re.search(pattern, sentence_lower):
                     # Clean up the assumption text
                     assumption = sentence.strip()
-                    if assumption and len(assumption) > 10:
+                    if assumption and len(assumption) > 15:
                         assumptions.append(assumption)
                     break
         
@@ -784,12 +797,10 @@ class BaseExecutionAgent(ExecutionAgent):
         Returns:
             Dict[str, int]: Estimated token counts for input and output
         """
-        # Rough approximation: 1 token ≈ 4 characters for English text
-        prompt_chars = len(self._build_prompt(subtask))
-        response_chars = len(response)
-        
-        input_tokens = max(1, prompt_chars // 4)
-        output_tokens = max(1, response_chars // 4)
+
+        prompt_text = self._build_prompt(subtask)
+        input_tokens = max(1, self._count_tokens(prompt_text))
+        output_tokens = max(1, self._count_tokens(response))
         
         return {
             "input": input_tokens,
